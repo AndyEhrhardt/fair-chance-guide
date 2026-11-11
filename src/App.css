@@ -189,3 +189,9 @@ h1, h2, h3, p { margin: 0; }
   .header-inner nav { gap: 9px; }
   .hero-copy h1 { font-size: 53px; }
 }
+
+.rule-sources { margin-top: 15px; border-top: 1px solid var(--line); padding-top: 10px; display: grid; justify-items: start; gap: 5px; }
+.rule-sources span, .result-body .answer-detail { color: var(--muted); font-size: 13px; }
+.rule-sources a, .next-steps-panel > a { font-size: 14px; line-height: 1.5; text-underline-offset: 3px; }
+.answer-detail, .review-question { margin-top: 12px; line-height: 1.55; }
+.review-question:last-of-type { margin-bottom: 14px; }

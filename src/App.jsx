@@ -1,6 +1,8 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import wordmark from './assets/mission/wordmark.png'
 import missionMark from './assets/mission/mark-cream.png'
+import { CaliforniaProcessQuestions, CaliforniaResults, CaliforniaWorkQuestion } from './California.jsx'
+import { californiaGuide } from './guidance/california.js'
 import './App.css'
 
 const STATES = [
@@ -35,6 +37,12 @@ const INITIAL_ANSWERS = {
   support: [],
   hiringStage: '',
   reportReceived: '',
+  caLegalCheck: '',
+  caAskedBefore: '',
+  caOfferDecision: '',
+  caWrittenNotice: '',
+  caReportSource: '',
+  caReportError: '',
 }
 
 const OPTIONS = {
@@ -118,7 +126,6 @@ const SUPPORT_OPTIONS = [
 const SOURCES = {
   eeoc: 'https://www.eeoc.gov/employers/small-business/criminal-records',
   ftc: 'https://consumer.ftc.gov/articles/employer-background-checks-and-your-rights',
-  california: 'https://calcivilrights.ca.gov/fair-chance-act/employment-rights/',
   newYork: 'https://dol.ny.gov/individuals-who-are-justice-involved',
   nyc: 'https://www.nyc.gov/site/cchr/law/fair-chance-act.page',
 }
@@ -274,6 +281,8 @@ function StepContent({ step, answers, update }) {
           <legend>Does the job involve any of these? <em>Choose any</em></legend>
           <MultiSelect options={JOB_DUTIES} values={answers.jobDuties} onChange={(value) => update('jobDuties', value)} />
         </fieldset>
+        {answers.state === 'California' && answers.employerType === 'private' &&
+          <CaliforniaWorkQuestion answers={answers} update={update} />}
       </div>
     </>
   }
@@ -339,7 +348,8 @@ function StepContent({ step, answers, update }) {
     <div className="step-heading"><span>Hiring process</span><h1 tabIndex="-1">Where are you in the process?</h1><p>The timing of a question or decision can change which protections apply.</p></div>
     <div className="form-stack compact">
       <ChoiceCards name="Hiring stage" options={OPTIONS.hiringStage} value={answers.hiringStage} onChange={(value) => update('hiringStage', value)} columns={2} />
-      {(answers.hiringStage === 'background' || answers.hiringStage === 'decision') && <fieldset>
+      {answers.state === 'California' && answers.hiringStage && <CaliforniaProcessQuestions answers={answers} update={update} />}
+      {answers.state !== 'California' && (answers.hiringStage === 'background' || answers.hiringStage === 'decision') && <fieldset>
         <legend>Did you receive a copy of the background report? <em>Optional</em></legend>
         <div className="inline-options">
           {['Yes', 'No', 'Not sure'].map((value) => <button type="button" key={value} aria-pressed={answers.reportReceived === value} className={answers.reportReceived === value ? 'selected' : ''} onClick={() => update('reportReceived', value)}>{value}</button>)}
@@ -361,9 +371,7 @@ function ResultCard({ tone, label, title, children, source }) {
   </article>
 }
 
-function Results({ answers, onEdit, onReset }) {
-  const reviewed = answers.state === 'California' || answers.state === 'New York'
-  const nyc = answers.state === 'New York' && isNewYorkCity(answers.city)
+function GeneralGuidance({ answers, reviewed, nyc }) {
   const preOffer = ['application', 'interview'].includes(answers.hiringStage)
   const backgroundStage = ['background', 'decision'].includes(answers.hiringStage) || ['check', 'denied'].includes(answers.goal)
   const protectedStatus = answers.recordStatus.some((status) => ['sealed', 'expunged', 'dismissed', 'pardoned'].includes(status))
@@ -379,22 +387,7 @@ function Results({ answers, onEdit, onReset }) {
     return steps
   }, [answers, backgroundStage, preOffer, protectedStatus])
 
-  const tags = [answers.state, answers.jobArea, OPTIONS.hiringStage.find(([value]) => value === answers.hiringStage)?.[1]].filter(Boolean)
-
-  return <main className="results page-shell">
-    <section className="result-hero">
-      <div>
-        <div className="eyebrow light"><MarkIcon type="book" /> Fair Chance Guide</div>
-        <h1 tabIndex="-1">Your hiring guide</h1>
-        <p>This is a starting point based on broad answers. It does not predict what an employer will do.</p>
-        <div className="summary-tags">{tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
-      </div>
-      <div className={`coverage-card ${reviewed ? 'reviewed' : ''}`}>
-        <span className="coverage-icon"><MarkIcon type={reviewed ? 'shield' : 'lock'} /></span>
-        <div><small>Coverage level</small><strong>{reviewed ? 'Reviewed jurisdiction sources' : 'Federal guidance only'}</strong><p>{nyc ? 'Includes New York State and New York City guidance.' : reviewed ? 'Includes guidance for your state.' : 'Your state or city may have additional protections.'}</p></div>
-      </div>
-    </section>
-
+  return <>
     <div className="results-layout">
       <section className="results-main" aria-label="Your guidance">
         <h2>What the rules focus on</h2>
@@ -402,12 +395,6 @@ function Results({ answers, onEdit, onReset }) {
           <p>EEOC guidance points employers toward the nature of the conduct, the time that has passed, and the nature and responsibilities of the job.</p>
           {answers.jobDuties.length > 0 && !answers.jobDuties.includes('none') && <div className="context-note"><strong>Why we asked about duties:</strong> Your selections help identify the actual responsibilities an employer may compare with a record.</div>}
         </ResultCard>
-
-        {answers.state === 'California' && <ResultCard tone="state-card" label="California" title={preOffer ? 'A covered employer generally should not ask yet.' : 'An individualized assessment may be required.'} source={SOURCES.california}>
-          <p>California’s Fair Chance Act generally covers employers with five or more employees, delays conviction-history questions until after a conditional offer, and requires a job-related individualized assessment before an offer is withdrawn.</p>
-          {answers.employerSize === '1-4' && <div className="context-note warning"><strong>Coverage note:</strong> You selected 1–4 employees, below the state law’s general five-employee threshold. Other rules may still apply.</div>}
-          {(answers.recordType === 'arrest' || protectedStatus) && <div className="context-note"><strong>Record-status flag:</strong> California restricts consideration of arrests without conviction and certain sealed, dismissed, expunged, or otherwise eradicated records.</div>}
-        </ResultCard>}
 
         {answers.state === 'New York' && <ResultCard tone="state-card" label={nyc ? 'New York City' : 'New York State'} title={nyc && preOffer ? 'NYC generally delays criminal-history questions until after a conditional offer.' : 'The employer must evaluate the record in relation to the specific job.'} source={nyc ? SOURCES.nyc : SOURCES.newYork}>
           <p>New York Article 23-A generally limits record-based denial to situations involving a direct relationship to the job or an unreasonable risk, after considering factors such as duties, time, age at the conduct, seriousness, and rehabilitation.</p>
@@ -435,10 +422,33 @@ function Results({ answers, onEdit, onReset }) {
       <div className="source-links">
         <a href={SOURCES.eeoc} target="_blank" rel="noreferrer">EEOC criminal-record guidance <MarkIcon type="external" /></a>
         <a href={SOURCES.ftc} target="_blank" rel="noreferrer">FTC background-check rights <MarkIcon type="external" /></a>
-        {answers.state === 'California' && <a href={SOURCES.california} target="_blank" rel="noreferrer">California Fair Chance Act <MarkIcon type="external" /></a>}
         {answers.state === 'New York' && <a href={nyc ? SOURCES.nyc : SOURCES.newYork} target="_blank" rel="noreferrer">{nyc ? 'NYC Fair Chance Act' : 'New York Article 23-A'} <MarkIcon type="external" /></a>}
       </div>
     </section>
+  </>
+}
+
+function Results({ answers, onEdit, onReset }) {
+  const reviewed = answers.state === 'California' || answers.state === 'New York'
+  const nyc = answers.state === 'New York' && isNewYorkCity(answers.city)
+  const california = answers.state === 'California' ? californiaGuide(answers) : null
+  const tags = [answers.state, answers.jobArea, OPTIONS.hiringStage.find(([value]) => value === answers.hiringStage)?.[1]].filter(Boolean)
+
+  return <main className="results page-shell">
+    <section className="result-hero">
+      <div>
+        <div className="eyebrow light"><MarkIcon type="book" /> Fair Chance Guide</div>
+        <h1 tabIndex="-1">Your hiring guide</h1>
+        <p>This is a starting point based on broad answers. It does not predict what an employer will do.</p>
+        <div className="summary-tags">{tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
+      </div>
+      <div className={`coverage-card ${reviewed ? 'reviewed' : ''}`}>
+        <span className="coverage-icon"><MarkIcon type={reviewed ? 'shield' : 'lock'} /></span>
+        <div><small>Coverage level</small><strong>{california ? (california.coverage.status === 'ordinary' ? 'California private-sector guide' : 'California coverage needs a check') : reviewed ? 'Reviewed jurisdiction sources' : 'Federal guidance only'}</strong><p>{california ? (california.coverage.status === 'ordinary' ? california.coverage.reason : 'See the coverage question below and the federal guidance that matches your answers.') : nyc ? 'Includes New York State and New York City guidance.' : reviewed ? 'Includes guidance for your state.' : 'Your state or city may have additional protections.'}</p></div>
+      </div>
+    </section>
+
+    {california ? <CaliforniaResults guide={california} /> : <GeneralGuidance answers={answers} reviewed={reviewed} nyc={nyc} />}
 
     <div className="result-actions">
       <button type="button" className="secondary-button" onClick={onEdit}><MarkIcon type="back" /> Change my answers</button>
@@ -464,7 +474,24 @@ function App() {
     window.scrollTo(0, 0)
   }, [screen])
 
-  const update = (field, value) => setAnswers((current) => ({ ...current, [field]: value }))
+  const update = (field, value) => setAnswers(current => {
+    if (current[field] === value) return current
+    const nextAnswers = { ...current, [field]: value }
+    if (field === 'state' && (current.state === 'California' || value === 'California')) {
+      for (const key of ['caLegalCheck', 'caAskedBefore', 'caOfferDecision', 'caWrittenNotice', 'caReportSource', 'caReportError', 'reportReceived']) nextAnswers[key] = ''
+    }
+    if (current.state === 'California') {
+      if (field === 'goal') nextAnswers.caAskedBefore = ''
+      if (field === 'employerType' || field === 'jobArea') nextAnswers.caLegalCheck = ''
+      if (field === 'hiringStage') nextAnswers.caOfferDecision = ''
+      if (field === 'hiringStage' || field === 'caOfferDecision') nextAnswers.caWrittenNotice = ''
+      if (field === 'caReportSource') {
+        nextAnswers.caReportError = ''
+        nextAnswers.reportReceived = ''
+      }
+    }
+    return nextAnswers
+  })
   const reset = () => {
     setAnswers(INITIAL_ANSWERS)
     setStep(0)
