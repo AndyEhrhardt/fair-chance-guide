@@ -1,4 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import wordmark from './assets/mission/wordmark.png'
+import missionMark from './assets/mission/mark-cream.png'
 import './App.css'
 
 const STATES = [
@@ -126,6 +128,7 @@ function MarkIcon({ type = 'check' }) {
     check: <path d="m5 12 4 4L19 6" />,
     lock: <><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></>,
     arrow: <><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></>,
+    book: <><path d="M3 5c3.3-.9 6.1-.5 9 1.4C14.9 4.5 17.7 4.1 21 5v14c-3.3-.9-6.1-.5-9 1.4C9.1 18.5 6.3 18.1 3 19Z" /><path d="M12 6.4v14" /></>,
     back: <><path d="M19 12H5" /><path d="m11 18-6-6 6-6" /></>,
     shield: <><path d="M12 3 5 6v5c0 4.8 2.8 8.1 7 10 4.2-1.9 7-5.2 7-10V6l-7-3Z" /><path d="m9 12 2 2 4-4" /></>,
     reset: <><path d="M4 4v6h6" /><path d="M5.6 15a7 7 0 1 0 .5-7.5L4 10" /></>,
@@ -135,23 +138,18 @@ function MarkIcon({ type = 'check' }) {
 }
 
 function ChoiceCards({ name, options, value, onChange, columns = 2 }) {
+  const group = useId()
   return (
     <div className={`choice-grid cols-${columns}`} role="radiogroup" aria-label={name}>
       {options.map(([optionValue, label, description]) => (
-        <button
-          type="button"
-          role="radio"
-          className={`choice-card ${value === optionValue ? 'selected' : ''}`}
-          aria-checked={value === optionValue}
-          key={optionValue}
-          onClick={() => onChange(optionValue)}
-        >
-          <span className="choice-indicator"><span /></span>
+        <label className={`choice-card ${value === optionValue ? 'selected' : ''}`} key={optionValue}>
+          <input type="radio" name={group} value={optionValue} checked={value === optionValue}
+            onChange={() => onChange(optionValue)} />
           <span>
             <strong>{label}</strong>
             {description && <small>{description}</small>}
           </span>
-        </button>
+        </label>
       ))}
     </div>
   )
@@ -190,42 +188,34 @@ function MultiSelect({ options, values, onChange }) {
 
 function Welcome({ onStart }) {
   return (
-    <main className="welcome page-shell">
-      <section className="hero-copy">
-        <div className="eyebrow"><span /> Private by design</div>
-        <h1>A clearer path through hiring rules.</h1>
-        <p className="hero-lead">
-          Answer a few general questions to see which hiring protections may matter—without sharing your name, employer, or case details.
-        </p>
-        <button className="primary-button hero-button" type="button" onClick={onStart}>
-          Start my private check <MarkIcon type="arrow" />
-        </button>
-        <p className="microcopy"><MarkIcon type="lock" /> Your answers stay in this tab and are never saved.</p>
+    <main className="welcome">
+      <section className="welcome-hero page-shell" aria-labelledby="guide-title">
+        <div className="hero-copy">
+          <div className="eyebrow"><MarkIcon type="book" /> Employment resource</div>
+          <h1 id="guide-title" tabIndex="-1">Fair Chance <em>Guide</em></h1>
+          <p className="hero-lead">Applying for a job with a record? Find out which hiring protections may apply and what steps you can take next.</p>
+          <button className="primary-button hero-button" type="button" onClick={onStart}>
+            Start my guide <MarkIcon type="arrow" />
+          </button>
+          <p className="microcopy"><MarkIcon type="lock" /> No account needed. Your answers stay in this tab.</p>
+        </div>
+        <div className="mission-art">
+          <div className="mission-window">
+            <img src={missionMark} width="720" height="720" alt="" />
+            <p>Changing lives<br /><em>through grace.</em></p>
+          </div>
+        </div>
       </section>
 
-      <aside className="promise-card" aria-label="Privacy promise">
-        <div className="promise-top">
-          <div className="shield-badge"><MarkIcon type="shield" /></div>
-          <span>MVP privacy promise</span>
-        </div>
-        <h2>Useful guidance.<br />No identity required.</h2>
-        <div className="promise-list">
-          <div><MarkIcon /><span><strong>No account</strong>No email, login, or profile</span></div>
-          <div><MarkIcon /><span><strong>No identifying details</strong>No name, birth date, case number, or employer name</span></div>
-          <div><MarkIcon /><span><strong>No saved answers</strong>Reset or refresh and your answers disappear</span></div>
-        </div>
-        <div className="promise-note">This prototype provides general information—not legal advice.</div>
-      </aside>
-
-      <section className="how-it-works" aria-labelledby="how-title">
-        <div>
-          <span className="section-kicker">How it works</span>
-          <h2 id="how-title">A few broad details. A more relevant starting point.</h2>
-        </div>
-        <div className="mini-steps">
-          <div><span>1</span><p><strong>Tell us the setting</strong>State, job area, and hiring stage</p></div>
-          <div><span>2</span><p><strong>Describe the record broadly</strong>Category and approximate timing</p></div>
-          <div><span>3</span><p><strong>Get a practical summary</strong>Questions to ask and official sources</p></div>
+      <section className="how-section" aria-labelledby="how-it-works">
+        <div className="page-shell">
+          <h2 id="how-it-works" tabIndex="-1">How the guide works</h2>
+          <ol className="mini-steps">
+            <li><span aria-hidden="true">1</span><div><h3>Tell us about the job</h3><p>Choose your goal, where you want to work, and the type of job.</p></div></li>
+            <li><span aria-hidden="true">2</span><div><h3>Share broad details</h3><p>Pick a record category, an approximate timeframe, and your hiring stage.</p></div></li>
+            <li><span aria-hidden="true">3</span><div><h3>Read your guide</h3><p>Get a tailored summary, practical next steps, and links to official sources.</p></div></li>
+          </ol>
+          <div className="privacy-note"><MarkIcon type="shield" /><div><h3>Your privacy</h3><p>The six steps never ask for your name, email, birth date, employer name, or case number. Refresh the page or start over to clear your answers.</p></div></div>
         </div>
       </section>
     </main>
@@ -235,14 +225,14 @@ function Welcome({ onStart }) {
 function StepContent({ step, answers, update }) {
   if (step === 0) {
     return <>
-      <div className="step-heading"><span>First, tell us your goal</span><h1>What would be most helpful today?</h1><p>This helps us focus the result on the right point in the hiring process.</p></div>
+      <div className="step-heading"><span>First, tell us your goal</span><h1 tabIndex="-1">What would be most helpful today?</h1><p>This helps us focus the result on the right point in the hiring process.</p></div>
       <ChoiceCards name="Your goal" options={OPTIONS.goal} value={answers.goal} onChange={(value) => update('goal', value)} />
     </>
   }
 
   if (step === 1) {
     return <>
-      <div className="step-heading"><span>Location</span><h1>Where is the job located?</h1><p>State and city rules can be different. This is about the job—not your home address.</p></div>
+      <div className="step-heading"><span>Location</span><h1 tabIndex="-1">Where is the job located?</h1><p>State and city rules can be different. This is about the job—not your home address.</p></div>
       <div className="form-stack">
         <label className="field-label">State or district <strong>Required</strong>
           <select value={answers.state} onChange={(event) => update('state', event.target.value)}>
@@ -260,7 +250,7 @@ function StepContent({ step, answers, update }) {
 
   if (step === 2) {
     return <>
-      <div className="step-heading"><span>Work</span><h1>Tell us about the job—not the employer.</h1><p>We only need broad details to understand which responsibilities and coverage rules may matter.</p></div>
+      <div className="step-heading"><span>Work</span><h1 tabIndex="-1">Tell us about the job—not the employer.</h1><p>We only need broad details to understand which responsibilities and coverage rules may matter.</p></div>
       <div className="form-stack compact">
         <fieldset>
           <legend>Type of employer <strong>Required</strong></legend>
@@ -290,7 +280,7 @@ function StepContent({ step, answers, update }) {
 
   if (step === 3) {
     return <>
-      <div className="step-heading"><span>Record</span><h1>Describe the record in broad terms.</h1><p>No statute, case number, court, or description of what happened is needed.</p></div>
+      <div className="step-heading"><span>Record</span><h1 tabIndex="-1">Describe the record in broad terms.</h1><p>No statute, case number, court, or description of what happened is needed.</p></div>
       <div className="form-stack compact">
         <fieldset>
           <legend>What kind of record is most relevant? <strong>Required</strong></legend>
@@ -320,7 +310,7 @@ function StepContent({ step, answers, update }) {
 
   if (step === 4) {
     return <>
-      <div className="step-heading"><span>Timing and context</span><h1>About how much time has passed?</h1><p>Approximate ranges are enough. We don’t ask how long you were incarcerated.</p></div>
+      <div className="step-heading"><span>Timing and context</span><h1 tabIndex="-1">About how much time has passed?</h1><p>Approximate ranges are enough. We don’t ask how long you were incarcerated.</p></div>
       <div className="form-stack compact">
         <div className="two-fields">
           <label className="field-label">Since the conduct occurred <strong>Required</strong>
@@ -346,13 +336,13 @@ function StepContent({ step, answers, update }) {
   }
 
   return <>
-    <div className="step-heading"><span>Hiring process</span><h1>Where are you in the process?</h1><p>The timing of a question or decision can change which protections apply.</p></div>
+    <div className="step-heading"><span>Hiring process</span><h1 tabIndex="-1">Where are you in the process?</h1><p>The timing of a question or decision can change which protections apply.</p></div>
     <div className="form-stack compact">
       <ChoiceCards name="Hiring stage" options={OPTIONS.hiringStage} value={answers.hiringStage} onChange={(value) => update('hiringStage', value)} columns={2} />
       {(answers.hiringStage === 'background' || answers.hiringStage === 'decision') && <fieldset>
         <legend>Did you receive a copy of the background report? <em>Optional</em></legend>
         <div className="inline-options">
-          {['Yes', 'No', 'Not sure'].map((value) => <button type="button" key={value} className={answers.reportReceived === value ? 'selected' : ''} onClick={() => update('reportReceived', value)}>{value}</button>)}
+          {['Yes', 'No', 'Not sure'].map((value) => <button type="button" key={value} aria-pressed={answers.reportReceived === value} className={answers.reportReceived === value ? 'selected' : ''} onClick={() => update('reportReceived', value)}>{value}</button>)}
         </div>
       </fieldset>}
     </div>
@@ -394,14 +384,14 @@ function Results({ answers, onEdit, onReset }) {
   return <main className="results page-shell">
     <section className="result-hero">
       <div>
-        <div className="eyebrow light"><span /> Your private summary</div>
-        <h1>Here’s what may matter most.</h1>
+        <div className="eyebrow light"><MarkIcon type="book" /> Fair Chance Guide</div>
+        <h1 tabIndex="-1">Your hiring guide</h1>
         <p>This is a starting point based on broad answers. It does not predict what an employer will do.</p>
         <div className="summary-tags">{tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
       </div>
       <div className={`coverage-card ${reviewed ? 'reviewed' : ''}`}>
         <span className="coverage-icon"><MarkIcon type={reviewed ? 'shield' : 'lock'} /></span>
-        <div><small>Coverage level</small><strong>{reviewed ? 'Reviewed jurisdiction sources' : 'Federal guidance only'}</strong><p>{reviewed ? 'Includes an official state source.' : 'State-specific rules are not yet reviewed in this MVP.'}</p></div>
+        <div><small>Coverage level</small><strong>{reviewed ? 'Reviewed jurisdiction sources' : 'Federal guidance only'}</strong><p>{nyc ? 'Includes New York State and New York City guidance.' : reviewed ? 'Includes guidance for your state.' : 'Your state or city may have additional protections.'}</p></div>
       </div>
     </section>
 
@@ -424,7 +414,7 @@ function Results({ answers, onEdit, onReset }) {
           {!nyc && <div className="context-note warning"><strong>Local rules can add protection:</strong> Entering the job’s city helps distinguish New York City’s Fair Chance Act from the statewide framework.</div>}
         </ResultCard>}
 
-        {!reviewed && <ResultCard tone="pending-card" label={`${answers.state} · research pending`} title="This MVP is not making a state-law claim here.">
+        {!reviewed && <ResultCard tone="pending-card" label={`${answers.state} · research pending`} title="State and local guidance for this location is pending.">
           <p>State and city rules can be more protective than the federal baseline. Until this jurisdiction is reviewed against official sources, use this result as a question list—not a statement of local law.</p>
         </ResultCard>}
 
@@ -434,15 +424,14 @@ function Results({ answers, onEdit, onReset }) {
       </section>
 
       <aside className="next-steps-panel">
-        <span className="section-kicker">Practical next steps</span>
-        <h2>A short checklist</h2>
+        <h2>Practical next steps</h2>
         <ol>{nextSteps.map((item, index) => <li key={item}><span>{index + 1}</span><p>{item}</p></li>)}</ol>
         <div className="privacy-reminder"><MarkIcon type="lock" /><p><strong>Still private</strong>Your answers were not saved or sent anywhere.</p></div>
       </aside>
     </div>
 
     <section className="source-strip">
-      <div><span className="section-kicker">Source shelf</span><h2>Read the official guidance</h2><p>Rules change. These links are the authority behind this prototype.</p></div>
+      <div><h2>Official sources</h2><p>Check the current guidance directly with these agencies.</p></div>
       <div className="source-links">
         <a href={SOURCES.eeoc} target="_blank" rel="noreferrer">EEOC criminal-record guidance <MarkIcon type="external" /></a>
         <a href={SOURCES.ftc} target="_blank" rel="noreferrer">FTC background-check rights <MarkIcon type="external" /></a>
@@ -465,13 +454,22 @@ function App() {
   const [showResults, setShowResults] = useState(false)
   const [answers, setAnswers] = useState(INITIAL_ANSWERS)
 
+  const appRef = useRef(null)
+  const screen = !started ? 'welcome' : showResults ? 'results' : step
+  const previousScreen = useRef(screen)
+  useEffect(() => {
+    if (previousScreen.current === screen) return
+    previousScreen.current = screen
+    appRef.current.querySelector('main h1')?.focus({ preventScroll: true })
+    window.scrollTo(0, 0)
+  }, [screen])
+
   const update = (field, value) => setAnswers((current) => ({ ...current, [field]: value }))
   const reset = () => {
     setAnswers(INITIAL_ANSWERS)
     setStep(0)
     setShowResults(false)
     setStarted(false)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const canContinue = [
@@ -490,17 +488,21 @@ function App() {
     } else {
       setStep((current) => current + 1)
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  return <div className="app">
+  return <div className="app" ref={appRef}>
     <header className="site-header">
-      <button className="brand" type="button" onClick={reset} aria-label="Fair Chance Guide home">
-        <span className="brand-mark"><MarkIcon type="shield" /></span>
-        <span>Fair Chance <strong>Guide</strong></span>
-        <small>MVP</small>
-      </button>
-      <div className="header-privacy"><MarkIcon type="lock" /> No personal information collected</div>
+      <div className="header-inner page-shell">
+        <button className="brand" type="button" onClick={reset} aria-label={started ? 'Fair Chance Guide home and clear answers' : 'Fair Chance Guide home'}>
+          <img src={wordmark} width="720" height="262" alt="The Middle Cross Mission" />
+        </button>
+        <nav aria-label="Guide navigation">
+          {started
+            ? <button type="button" onClick={reset}><MarkIcon type="reset" /> Start over</button>
+            : <a href="#how-it-works">How it works</a>}
+          <a className="mission-link" href="https://middlecrossmission.org/" target="_blank" rel="noreferrer">Visit the Mission <MarkIcon type="external" /></a>
+        </nav>
+      </div>
     </header>
 
     {!started && !showResults && <Welcome onStart={() => setStarted(true)} />}
@@ -508,7 +510,7 @@ function App() {
     {started && !showResults && <main className="wizard page-shell">
       <div className="progress-wrap">
         <div className="progress-copy"><span>Step {step + 1} of {STEP_LABELS.length}</span><strong>{STEP_LABELS[step]}</strong></div>
-        <div className="progress-track" role="progressbar" aria-valuemin="1" aria-valuemax={STEP_LABELS.length} aria-valuenow={step + 1}><span style={{ width: `${((step + 1) / STEP_LABELS.length) * 100}%` }} /></div>
+        <div className="progress-track" role="progressbar" aria-label="Questionnaire progress" aria-valuemin="1" aria-valuemax={STEP_LABELS.length} aria-valuenow={step + 1}><span style={{ width: `${((step + 1) / STEP_LABELS.length) * 100}%` }} /></div>
         <div className="step-labels">{STEP_LABELS.map((label, index) => <span key={label} className={index <= step ? 'active' : ''}>{label}</span>)}</div>
       </div>
 
@@ -524,7 +526,12 @@ function App() {
 
     {showResults && <Results answers={answers} onEdit={() => { setShowResults(false); setStep(0) }} onReset={reset} />}
 
-    <footer className="site-footer"><span>Fair Chance Guide · Prototype</span><span>Private by default · Educational information only</span></footer>
+    <footer className="site-footer">
+      <div className="page-shell footer-inner">
+        <span><img src={missionMark} width="720" height="720" alt="" />The Middle Cross Mission</span>
+        <p>General information only. This guide does not provide legal advice.</p>
+      </div>
+    </footer>
   </div>
 }
 

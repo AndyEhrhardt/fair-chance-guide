@@ -1,14 +1,29 @@
 :root {
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: #132824;
-  background: #f6f3ea;
+  --green: #295a5b;
+  --leaf: #6b9f85;
+  --cream: #f7f0e5;
+  --navy: #273f6b;
+  --sky: #bcc8db;
+  --ink: #313944;
+  --paper: #fffdf8;
+  --muted: #515f62;
+  --line: #c9cfca;
+  --tint: #e7eee7;
+  --display: Georgia, 'Times New Roman', serif;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: var(--ink);
+  background: var(--cream);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
-html { scroll-behavior: smooth; }
-body { min-width: 320px; min-height: 100vh; margin: 0; background: #f6f3ea; }
+* { box-sizing: border-box; }
+body { min-width: 320px; margin: 0; }
 button, input, select { font: inherit; }
-button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid rgba(239, 131, 84, .55); outline-offset: 3px; }
-::selection { color: #132824; background: #cfe86f; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+a { color: var(--green); }
+a, button, input, select { -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 3px solid var(--navy); outline-offset: 4px; }
+h1[tabindex="-1"]:focus { outline: 0; }
+::selection { color: var(--ink); background: var(--sky); }
