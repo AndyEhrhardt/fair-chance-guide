@@ -6,6 +6,8 @@ import { californiaGuide, REVIEW_DATE as caDate, sources as caSources } from './
 import { DetailedResults, OptionalSelect } from './DetailedGuidance.jsx'
 import { NewYorkLocation, NewYorkProcessQuestions } from './NewYork.jsx'
 import { newYorkGuide, nyEmployerSizes, REVIEW_DATE as nyDate, sources as nySources } from './guidance/newYork.js'
+import { MinnesotaProcessQuestions, MinnesotaWorkQuestion } from './Minnesota.jsx'
+import { minnesotaGuide, REVIEW_DATE as mnDate, sources as mnSources } from './guidance/minnesota.js'
 import './App.css'
 
 const STATES = [
@@ -53,6 +55,13 @@ const INITIAL_ANSWERS = {
   nyMaterials: '',
   nyReportSource: '',
   nyReportError: '',
+  mnRequirement: '',
+  mnInquiry: '',
+  mnDecision: '',
+  mnReportSource: '',
+  mnReportError: '',
+  mnCopyRequest: '',
+  mnReportBasis: '',
 }
 
 const OPTIONS = {
@@ -289,6 +298,7 @@ function StepContent({ step, answers, update }) {
           <legend>Does the job involve any of these? <em>Choose any</em></legend>
           <MultiSelect options={JOB_DUTIES} values={answers.jobDuties} onChange={(value) => update('jobDuties', value)} />
         </fieldset>
+        {answers.state === 'Minnesota' && <MinnesotaWorkQuestion answers={answers} update={update} />}
         {answers.state === 'California' && answers.employerType === 'private' &&
           <CaliforniaWorkQuestion answers={answers} update={update} />}
         {answers.state === 'New York' && answers.employerType === 'private' &&
@@ -360,7 +370,8 @@ function StepContent({ step, answers, update }) {
       <ChoiceCards name="Hiring stage" options={OPTIONS.hiringStage} value={answers.hiringStage} onChange={(value) => update('hiringStage', value)} columns={2} />
       {answers.state === 'California' && answers.hiringStage && <CaliforniaProcessQuestions answers={answers} update={update} />}
       {answers.state === 'New York' && answers.hiringStage && <NewYorkProcessQuestions answers={answers} update={update} />}
-      {!['California', 'New York'].includes(answers.state) && (answers.hiringStage === 'background' || answers.hiringStage === 'decision') && <fieldset>
+      {answers.state === 'Minnesota' && answers.hiringStage && <MinnesotaProcessQuestions answers={answers} update={update} />}
+      {!['California', 'New York', 'Minnesota'].includes(answers.state) && (answers.hiringStage === 'background' || answers.hiringStage === 'decision') && <fieldset>
         <legend>Did you receive a copy of the background report? <em>Optional</em></legend>
         <div className="inline-options">
           {['Yes', 'No', 'Not sure'].map((value) => <button type="button" key={value} aria-pressed={answers.reportReceived === value} className={answers.reportReceived === value ? 'selected' : ''} onClick={() => update('reportReceived', value)}>{value}</button>)}
@@ -440,6 +451,11 @@ function Results({ answers, onEdit, onReset }) {
     coverageDescription = ordinary ? guide.coverage.reason : 'See the coverage question below and the federal guidance that matches your answers.'
     details = <DetailedResults guide={guide} jurisdiction="California" sources={caSources} reviewDate={caDate}
       help={{ name: 'Find help from California’s Civil Rights Department', url: caSources.scope.url }} />
+  } else if (answers.state === 'Minnesota') {
+    const guide = minnesotaGuide(answers)
+    coverageTitle = guide.coverage.title
+    coverageDescription = guide.coverage.reason
+    details = <DetailedResults guide={guide} jurisdiction="Minnesota" sources={mnSources} reviewDate={mnDate} help={mnSources.mdhr} />
   } else if (answers.state === 'New York') {
     const guide = newYorkGuide(answers)
     coverageTitle = guide.coverage.title
@@ -497,6 +513,22 @@ function App() {
     if (field === 'state' && (current.state === 'New York' || value === 'New York')) {
       for (const key of ['nyArea', 'nyLegalRule', 'nyAskedBefore', 'nyOfferDecision', 'nyMaterials', 'nyReportSource', 'nyReportError', 'reportReceived', 'city']) nextAnswers[key] = ''
       if (!['15-49', '50+', 'unknown'].includes(current.employerSize)) nextAnswers.employerSize = ''
+    }
+    if (field === 'state' && (current.state === 'Minnesota' || value === 'Minnesota')) {
+      for (const key of ['mnRequirement', 'mnInquiry', 'mnDecision', 'mnReportSource', 'mnReportError', 'mnCopyRequest', 'mnReportBasis', 'reportReceived', 'city']) nextAnswers[key] = ''
+    }
+    if (current.state === 'Minnesota') {
+      if (field === 'goal') nextAnswers.mnInquiry = ''
+      if (field === 'employerType' || field === 'jobArea') nextAnswers.mnRequirement = ''
+      if (field === 'hiringStage') nextAnswers.mnDecision = ''
+      if (field === 'hiringStage' || field === 'mnDecision') nextAnswers.mnReportBasis = ''
+      if (field === 'mnReportSource') {
+        nextAnswers.reportReceived = ''
+        nextAnswers.mnReportError = ''
+        nextAnswers.mnCopyRequest = ''
+        nextAnswers.mnReportBasis = ''
+      }
+      if (field === 'reportReceived') nextAnswers.mnCopyRequest = ''
     }
     if (current.state === 'New York') {
       if (field === 'goal') nextAnswers.nyAskedBefore = ''
